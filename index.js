@@ -1,36 +1,27 @@
-// create the dwv app
 var app = new dwv.App();
-// initialise with the id of the container div
+
+var tools = {
+  Draw: {
+    options: ['Circle'],
+    type: 'factory'
+  }
+};
+
 app.init({
   dataViewConfigs: {'*': [{divId: 'layerGroup0'}]},
-  tools: {
-    Scroll: {}
-  }
+  tools: tools
 });
 // activate tool once done loading
 app.addEventListener('load', function () {
-  app.setTool('Scroll');
+  app.setTool('Draw');
+  app.setDrawShape(tools.Draw.options[0]);
+  //var layer = new dwv.gui.DrawLayer('layerGroup0')
+  factory = new dwv.tool.draw.CircleFactory();
+  var point1 = new dwv.math.Point2D(10, 10)
+  var point2 = new dwv.math.Point2D(10, 100)
+   var draw =  factory.create([point1, point2], app.getToolboxController().getSelectedTool().style, app.getActiveLayerGroup().getActiveViewLayer().getViewController())
+    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().add(draw)
+   console.log(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().getChildren()[0])
 });
 // load dicom data
-app.loadURLs(['https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm','https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323707.dcm','https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323563.dcm']);
-
-// 
-var range = document.getElementById('sliceRange');
-range.min = 0;
-app.addEventListener('loadend', function () {
-  range.max = app.getImage(0).getGeometry().getSize().get(2) - 1;
-});
-app.addEventListener('slicechange', function () {
-  // update slider on slice change (for ex via mouse wheel)
-  var lg = app.getLayerGroupById(0);
-  var vc = lg.getActiveViewLayer().getViewController();
-  range.value = vc.getCurrentPosition().k;
-});
-range.oninput = function () {
-  var lg = app.getLayerGroupById(0);
-  var vc = lg.getActiveViewLayer().getViewController();
-  var index = vc.getCurrentIndex();
-  var values = index.getValues();
-  values[2] = this.value;
-  vc.setCurrentIndex(new dwv.math.Index(values));
-}
+app.loadURLs(['https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm']);
