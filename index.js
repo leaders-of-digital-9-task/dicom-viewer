@@ -1,18 +1,71 @@
-// create the dwv app
-var app = new dwv.App();
-// initialise with the id of the container div
-app.init({
-  dataViewConfigs: {'*': [{divId: 'layerGroup0'}]},
-  tools: {
-    Scroll: {}
+var filterList = ['Threshold', 'Sharpen', 'Sobel'];
+
+var shapeList = [
+  'Arrow',
+  'Ruler',
+  'Protractor',
+  'Rectangle',
+  'Roi',
+  'Ellipse',
+  'Circle',
+  'FreeHand'
+];
+
+var toolList = {
+  Scroll: {},
+  Opacity: {},
+  WindowLevel: {},
+  ZoomAndPan: {},
+  Draw: {
+    options: shapeList,
+    type: 'factory',
+    events: ['drawcreate', 'drawchange', 'drawmove', 'drawdelete']
+  },
+  Livewire: {
+    events: ['drawcreate', 'drawchange', 'drawmove', 'drawdelete']
+  },
+  Filter: {
+    options: filterList,
+    type: 'instance',
+    events: ['filterrun', 'filterundo']
+  },
+  Floodfill: {
+    events: ['drawcreate', 'drawchange', 'drawmove', 'drawdelete']
   }
-});
+};
+
+// initialise the application
+var options = {
+  dataViewConfigs: {'*': [{divId: 'layerGroup0'}]},
+  tools: toolList
+};
+
+// main application
+var app = new dwv.App();
+app.init(options);
 // activate tool once done loading
 app.addEventListener('load', function () {
   app.setTool('Scroll');
+
+  app.setTool('Draw');
+  app.setDrawShape(toolList.Draw.options[0]);
+
 });
-// load dicom data
-app.loadURLs(['https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm','https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323707.dcm','https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323563.dcm']);
+
+
+function receiveMessage(event)
+{
+      console.log(event.data, "FFFFFFFFF")
+      let data = JSON.parse(event.data)
+      if (data.type == "setDicom"){
+        app.loadURLs([data.data])
+      } else if(data.type == "setTool"){
+        app.setTool('Draw');
+        app.setDrawShape("Circle");
+      }
+}
+window.addEventListener("message", receiveMessage, false);
+
 
 // 
 var range = document.getElementById('sliceRange');
