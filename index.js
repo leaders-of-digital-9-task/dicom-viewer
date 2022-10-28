@@ -1,55 +1,28 @@
-var filterList = ['Threshold', 'Sharpen', 'Sobel'];
 
-var shapeList = [
-  'Arrow',
-  'Ruler',
-  'Protractor',
-  'Rectangle',
-  'Roi',
-  'Ellipse',
-  'Circle',
-  'FreeHand'
-];
+var app = new dwv.App();
 
-var toolList = {
+var tools = {
   Scroll: {},
-  Opacity: {},
-  WindowLevel: {},
-  ZoomAndPan: {},
   Draw: {
-    options: shapeList,
-    type: 'factory',
-    events: ['drawcreate', 'drawchange', 'drawmove', 'drawdelete']
-  },
-  Livewire: {
-    events: ['drawcreate', 'drawchange', 'drawmove', 'drawdelete']
-  },
-  Filter: {
-    options: filterList,
-    type: 'instance',
-    events: ['filterrun', 'filterundo']
-  },
-  Floodfill: {
-    events: ['drawcreate', 'drawchange', 'drawmove', 'drawdelete']
+    options: ['Circle', 'Roi'],
+    type: 'factory'
   }
 };
 
-// initialise the application
-var options = {
+app.init({
   dataViewConfigs: {'*': [{divId: 'layerGroup0'}]},
-  tools: toolList
-};
-
-// main application
-var app = new dwv.App();
-app.init(options);
-// activate tool once done loading
+  tools: tools
+});
 app.addEventListener('load', function () {
   app.setTool('Scroll');
 
-  app.setTool('Draw');
-  app.setDrawShape(toolList.Draw.options[0]);
-
+  //var layer = new dwv.gui.DrawLayer('layerGroup0')
+//   factory = new dwv.tool.draw.CircleFactory();
+//   var point1 = new dwv.math.Point2D(10, 10)
+//   var point2 = new dwv.math.Point2D(10, 100)
+//    var draw =  factory.create([point1, point2], app.getToolboxController().getSelectedTool().style, app.getActiveLayerGroup().getActiveViewLayer().getViewController())
+//     app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().add(draw)
+//    console.log(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().getChildren()[0])
 });
 
 
@@ -60,14 +33,26 @@ function receiveMessage(event)
       if (data.type == "setDicom"){
         app.loadURLs([data.data])
       } else if(data.type == "setTool"){
-        app.setTool('Draw');
-        app.setDrawShape("Circle");
+        if (data.data == "null"){
+          app.setTool('Scroll');
+        } else{
+          app.setTool('Draw');
+          app.setDrawShape(data.data);
+        }
+
       }
 }
 window.addEventListener("message", receiveMessage, false);
 
 
-// 
+
+app.addEventListener("drawchange", function (){
+  console.log("DRAWWWWWW")
+})
+
+
+
+
 var range = document.getElementById('sliceRange');
 range.min = 0;
 app.addEventListener('loadend', function () {
