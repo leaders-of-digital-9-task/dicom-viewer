@@ -18,8 +18,12 @@ app.init({
   dataViewConfigs: {'*': [{divId: 'layerGroup0'}]},
   tools: tools
 });
+
+parent.postMessage({'type': 'getDicom', data: ""}, "*")
+
 app.addEventListener('load', function () {
   app.setTool('Scroll');
+
 });
 
 function createCircle(circleData) {
@@ -111,7 +115,6 @@ function postRois() {
     }))
     return roisAttrs.flat().map((e) => {
         var points = [];
-        console.log(e.points)
         for (var i = 0; i < e.points.length; i+=2) {
             points.push({x: e.points[i], y: e.points[i+1]})
         }
@@ -130,7 +133,6 @@ function postDraws() {
 
 function receiveMessage(event)
 {
-      console.log(event.data, "FFFFFFFFF")
       let data = undefined;
       try{
         data = event.data
@@ -158,6 +160,8 @@ function receiveMessage(event)
         app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find('#'+findActive())[0].destroy()
       }
 }
+window.addEventListener("message", receiveMessage, false);
+
 
 function findActive() {
     activeCandidates = app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().getChildren().map(
@@ -178,13 +182,8 @@ function findActive() {
     return [...active][0]
 }
 
-window.addEventListener("message", receiveMessage, false);
 
 
-
-app.addEventListener("drawchange", function (){
-  console.log("DRAWWWWWW")
-})
 
 
 var range = document.getElementById('sliceRange');
@@ -193,34 +192,36 @@ app.addEventListener('loadend', function () {
   range.max = app.getImage(0).getGeometry().getSize().get(2) - 1;
 });
 
-app.loadURLs(['https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm'])
+// app.loadURLs(['https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm'])
 
-app.addEventListener('load', () => {
-    app.setTool('Draw')
-    createCircle({
-        type: 'Circle',
-        center: {
-            x: 10, y: 100
-        },
-        radius: 100
-    })
-    createRoi({
-        type: 'Roi',
-        points: [
-            {
-                x: 100, y: 100
-            },
-            {
-                x: 10, y: 100
-            }
-        ]
-    })
-    app.setDrawShape('Roi')
-    setTimeout(() => {
-    }, 3000)
-    setTimeout(() => {
-    }, 5000)
-})
+// app.addEventListener('load', () => {
+//     app.setTool('Scroll')
+
+//     // app.setTool('Draw')
+//     // createCircle({
+//     //     type: 'Circle',
+//     //     center: {
+//     //         x: 10, y: 100
+//     //     },
+//     //     radius: 100
+//     // })
+//     // createRoi({
+//     //     type: 'Roi',
+//     //     points: [
+//     //         {
+//     //             x: 100, y: 100
+//     //         },
+//     //         {
+//     //             x: 10, y: 100
+//     //         }
+//     //     ]
+//     // })
+//     // app.setDrawShape('Roi')
+//     // setTimeout(() => {
+//     // }, 3000)
+//     // setTimeout(() => {
+//     // }, 5000)
+// })
 
 app.addEventListener('slicechange', function () {
   // update slider on slice change (for ex via mouse wheel)
