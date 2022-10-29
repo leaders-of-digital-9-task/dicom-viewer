@@ -103,13 +103,23 @@ function postCircles() {
 }
 
 function postRois() {
-    console.log(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children)
-    return app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children.filter(
-        e => e.attrs.name == 'roi-group'
-    ).map(e => {
-        return e.children.filter(e => e.attrs.name == 'shape')[0].attrs
-    }).flat().map((e) => {
-        var points = []
+    roisAttrs = app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().getChildren().filter(e => e.attrs.name == 'roi-group').map(
+        (e) => {
+            console.log(e, "eeeeee")
+            return e.children.filter(
+                (ee) => {
+                    console.log(e)
+                    return ee.attrs.name == 'shape'
+                }
+            ).map(e => e.attrs)
+        }
+    )
+    roisAttrs = roisAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children[0].children.filter(e => e.attrs.name == 'roi-group').map((e) => {
+        return e.children.filter((e) => e.attrs.name == 'shape').map(e => e.attrs)
+    }))
+    return roisAttrs.flat().map((e) => {
+        var points = [];
+        console.log(e.points)
         for (var i = 0; i < e.points.length; i+=2) {
             points.push({x: e.points[i], y: e.points[i+1]})
         }
@@ -179,13 +189,24 @@ app.addEventListener('load', () => {
         },
         radius: 100
     })
+    createRoi({
+        type: 'Roi',
+        points: [
+            {
+                x: 100, y: 100
+            },
+            {
+                x: 10, y: 100
+            }
+        ]
+    })
     app.setDrawShape('Roi')
     setTimeout(() => {
         app.setDrawShape('Circle')
     }, 3000)
     setTimeout(() => {
-        console.log(postRois())
-    }, 2000)
+        console.log(postDraws())
+    }, 5000)
 })
 
 app.addEventListener('slicechange', function () {
