@@ -20,14 +20,6 @@ app.init({
 });
 app.addEventListener('load', function () {
   app.setTool('Scroll');
-
-  //var layer = new dwv.gui.DrawLayer('layerGroup0')
-//   factory = new dwv.tool.draw.CircleFactory();
-//   var point1 = new dwv.math.Point2D(10, 10)
-//   var point2 = new dwv.math.Point2D(10, 100)
-//    var draw =  factory.create([point1, point2], app.getToolboxController().getSelectedTool().style, app.getActiveLayerGroup().getActiveViewLayer().getViewController())
-//     app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().add(draw)
-//    console.log(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().getChildren()[0])
 });
 
 function createCircle(circleData) {
@@ -162,7 +154,30 @@ function receiveMessage(event)
       else if (data.type == 'getDraws') {
         parent.postMessage({'type': 'returnDraws', data: postDraws()}, "*")
       }
+      else if (data.type == 'deleteSelected') {
+        app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find('#'+findActive())[0].destroy()
+      }
 }
+
+function findActive() {
+    activeCandidates = app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().getChildren().map(
+        (e) => {
+            return e.children.filter(
+                (ee) => {
+                    console.log(e)
+                    return ee.attrs.name == 'anchor'
+                }
+            )
+        }
+    )
+    activeCandidates = activeCandidates.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children[0].children.map((e) => {
+        return e.children.filter((e) => e.attrs.name == 'anchor')
+    }))
+    active = new Set(activeCandidates.flat().map(e => e.parent.id()))
+    console.log(activeCandidates, active)
+    return [...active][0]
+}
+
 window.addEventListener("message", receiveMessage, false);
 
 
@@ -202,10 +217,8 @@ app.addEventListener('load', () => {
     })
     app.setDrawShape('Roi')
     setTimeout(() => {
-        app.setDrawShape('Circle')
     }, 3000)
     setTimeout(() => {
-        console.log(postDraws())
     }, 5000)
 })
 
