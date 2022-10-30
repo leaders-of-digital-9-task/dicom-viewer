@@ -224,7 +224,7 @@ app.addEventListener('loadend', function () {
   //range.max = app.getImage(0).getGeometry().getSize().get(2) - 1;
 });
 
-app.loadURLs(['https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm'])
+//app.loadURLs(['https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm'])
 
 app.addEventListener('load', () => {
     
