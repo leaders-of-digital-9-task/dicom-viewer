@@ -42,7 +42,8 @@ function createCircle(circleData) {
         app.getActiveLayerGroup().getActiveViewLayer().getViewController()
     )
     
-    draw.id(dwv.math.guid());
+    //draw.id(dwv.math.guid());
+    draw.id("id")
     draw.draggable(true)
     draw.addEventListener('mouseover', () => {
         document.body.style.cursor = 'pointer'
@@ -121,7 +122,8 @@ function postCircles() {
                 x: e.x,
                 y: e.y
             },
-            radius: e.radius
+            radius: e.radius,
+            id: e.id
         }
     })
 }
@@ -148,7 +150,8 @@ function postRois() {
         }
         return {
             type: 'Roi',
-            points: points
+            points: points,
+            id: e.id
         }
     })
 }
@@ -196,6 +199,9 @@ function receiveMessage(event)
       else if (data.type == 'setContrast') {
         document.getElementById("layerGroup0").style = `filter: contrast(${data.data}%);`
       }
+      else if (data.type == 'deleteById') {
+        app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find("#"+data.data)[0].destroy()
+      }
 }
 window.addEventListener("message", receiveMessage, false);
 
@@ -227,7 +233,9 @@ app.addEventListener('loadend', function () {
 //app.loadURLs(['https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm'])
 
 app.addEventListener('load', () => {
-    
+    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().addEventListener('mouseup', () => {
+        parent.postMessage({'type': 'returnDraws', data: postDraws()}, "*")
+    })
     // createCircle({
     //     type: 'Circle',
     //     center: {
