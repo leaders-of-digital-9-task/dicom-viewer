@@ -15,11 +15,26 @@
     <title>Document</title>
 </head>
 <body>
+    <style>
+        html, body {
+  height: 100%;
+}
+
+#dwv { height: 80%; }
+
+.layerGroup {
+  display: inline-block;
+  height: 250px;
+  width: 250px;
+}
+
+.layer {
+  position: absolute;
+}
+    </style>
     <div id="dwv">
-        <div id="layerGroup0"></div>
+        <div id="layerGroup0" class="layerGroup"></div>
     </div>
-      
-    <input type="range" id="sliceRange" value="0">
     <script src="index.js"></script>
 </body>
 </html>

@@ -11,7 +11,8 @@ var tools = {
   Draw: {
     options: ['Circle', 'Roi'],
     type: 'factory'
-  }
+  },
+  ZoomAndPan: {}
 };
 
 app.init({
@@ -22,8 +23,8 @@ app.init({
 parent.postMessage({'type': 'getDicom', data: ""}, "*")
 
 app.addEventListener('load', function () {
-  app.setTool('Scroll');
-
+  app.setTool('Draw');
+  app.setDrawShape('Circle')
 });
 
 function createCircle(circleData) {
@@ -36,7 +37,19 @@ function createCircle(circleData) {
         styles,
         app.getActiveLayerGroup().getActiveViewLayer().getViewController()
     )
-    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().add(draw)
+    draw.id(dwv.math.guid());
+    draw.draggable(true)
+    draw.addEventListener('mouseover', () => {
+        document.body.style.cursor = 'pointer'
+    })
+    draw.addEventListener('mouseout', () => {
+        document.body.style.cursor = 'default'
+    })
+    //drawCommand = new dwv.tool.DrawGroupCommand(draw, 'circle-group', app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer()['.position-group'][0], false)
+    posGroup = app.getActiveLayerGroup().getActiveDrawLayer().getDrawController().getCurrentPosGroup()
+    posGroup.add(draw)
+    //drawCommand.execute()
+    //app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().find('.position-group')[0].add(draw)
 }
 
 
@@ -52,10 +65,18 @@ function createRoi(circleData) {
         styles, 
         app.getActiveLayerGroup().getActiveViewLayer().getViewController()
     )
-    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().add(draw)
-
+    draw.id(dwv.math.guid());
+    draw.draggable(true)
+    draw.addEventListener('mouseover', () => {
+        document.body.style.cursor = 'pointer'
+    })
+    draw.addEventListener('mouseout', () => {
+        document.body.style.cursor = 'default'
+    })
+    //drawCommand = new dwv.tool.DrawGroupCommand(draw, 'circle-group', app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer()['.position-group'][0], false)
+    posGroup = app.getActiveLayerGroup().getActiveDrawLayer().getDrawController().getCurrentPosGroup()
+    posGroup.add(draw)
 }
-
 
 function createDraws(drawsData) {
     drawsData.data.map((e) => {
@@ -70,7 +91,6 @@ function createDraws(drawsData) {
 
 
 function postCircles() {
-    console.log(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children)
     circlesAttrs = app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().getChildren().filter(e => e.attrs.name == 'circle-group').map(
         (e) => {
             console.log(e, "eeeeee")
@@ -145,9 +165,12 @@ function receiveMessage(event)
       } else if(data.type == "setTool"){
         if (data.data == "null"){
           app.setTool('Scroll');
-        } else{
+        } else if (data.data == 'Roi' || data.data == 'Circle'){
           app.setTool('Draw');
           app.setDrawShape(data.data);
+        }
+        else if (data.data == 'ZoomAndPan') {
+            app.setTool('ZoomAndPan');
         }
       }
       else if (data.type == 'setDraws') {
@@ -183,45 +206,43 @@ function findActive() {
 }
 
 
-
-
-
-var range = document.getElementById('sliceRange');
-range.min = 0;
 app.addEventListener('loadend', function () {
-  range.max = app.getImage(0).getGeometry().getSize().get(2) - 1;
+  //range.max = app.getImage(0).getGeometry().getSize().get(2) - 1;
 });
 
-// app.loadURLs(['https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm'])
+//app.loadURLs(['https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm'])
 
-// app.addEventListener('load', () => {
-//     app.setTool('Scroll')
+app.addEventListener('load', () => {
+    app.setTool('Scroll')
 
-//     // app.setTool('Draw')
-//     // createCircle({
-//     //     type: 'Circle',
-//     //     center: {
-//     //         x: 10, y: 100
-//     //     },
-//     //     radius: 100
-//     // })
-//     // createRoi({
-//     //     type: 'Roi',
-//     //     points: [
-//     //         {
-//     //             x: 100, y: 100
-//     //         },
-//     //         {
-//     //             x: 10, y: 100
-//     //         }
-//     //     ]
-//     // })
-//     // app.setDrawShape('Roi')
-//     // setTimeout(() => {
-//     // }, 3000)
-//     // setTimeout(() => {
-//     // }, 5000)
-// })
+    // app.setTool('Draw')
+    // createCircle({
+    //     type: 'Circle',
+    //     center: {
+    //         x: 10, y: 100
+    //     },
+    //     radius: 100
+    // })
+    // setTimeout(() => {
+    //     console.log(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children)
+    // }, 3000)
+    // createRoi({
+    //     type: 'Roi',
+    //     points: [
+    //         {
+    //             x: 100, y: 100
+    //         },
+    //         {
+    //             x: 10, y: 100
+    //         }
+    //     ]
+    // })
+    // app.setDrawShape('Roi')
+    // setTimeout(() => {
+    // }, 3000)
+    // setTimeout(() => {
+    // }, 5000)
+})
 
 app.addEventListener('slicechange', function () {
   // update slider on slice change (for ex via mouse wheel)
@@ -229,12 +250,12 @@ app.addEventListener('slicechange', function () {
   var vc = lg.getActiveViewLayer().getViewController();
   range.value = vc.getCurrentPosition().k;
 });
-range.oninput = function () {
-  var lg = app.getLayerGroupById(0);
-  var vc = lg.getActiveViewLayer().getViewController();
-  var index = vc.getCurrentIndex();
-  var values = index.getValues();
-  values[2] = this.value;
-  vc.setCurrentIndex(new dwv.math.Index(values));
-}
+// range.oninput = function () {
+//   var lg = app.getLayerGroupById(0);
+//   var vc = lg.getActiveViewLayer().getViewController();
+//   var index = vc.getCurrentIndex();
+//   var values = index.getValues();
+//   values[2] = this.value;
+//   vc.setCurrentIndex(new dwv.math.Index(values));
+// }
 
