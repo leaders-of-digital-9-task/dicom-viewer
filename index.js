@@ -13,7 +13,8 @@ var tools = {
     type: 'factory'
   },
   ZoomAndPan: {},
-  WindowLevel: {}
+  WindowLevel: {},
+  Filter: {}
 };
 
 app.init({
@@ -27,6 +28,7 @@ app.addEventListener('load', function () {
   app.setTool('Draw');
   app.setDrawShape('Circle')
 });
+
 
 function createCircle(circleData) {
     var point1 = new dwv.math.Point2D(circleData.center.x, circleData.center.y)
@@ -191,6 +193,9 @@ function receiveMessage(event)
       else if (data.type == 'deleteSelected') {
         app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find('#'+findActive())[0].destroy()
       }
+      else if (data.type == 'setContrast') {
+        document.getElementById("layerGroup0").style = `filter: contrast(${data.data}%);`
+      }
 }
 window.addEventListener("message", receiveMessage, false);
 
@@ -219,11 +224,10 @@ app.addEventListener('loadend', function () {
   //range.max = app.getImage(0).getGeometry().getSize().get(2) - 1;
 });
 
-//app.loadURLs(['https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm'])
+app.loadURLs(['https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm'])
 
 app.addEventListener('load', () => {
-    app.setTool('Scroll')
-
+    
     // createCircle({
     //     type: 'Circle',
     //     center: {
