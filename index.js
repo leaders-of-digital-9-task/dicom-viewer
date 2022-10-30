@@ -37,6 +37,7 @@ function createCircle(circleData) {
         styles,
         app.getActiveLayerGroup().getActiveViewLayer().getViewController()
     )
+    app.undo()
     draw.id(dwv.math.guid());
     draw.draggable(true)
     draw.addEventListener('mouseover', () => {
@@ -48,6 +49,7 @@ function createCircle(circleData) {
     //drawCommand = new dwv.tool.DrawGroupCommand(draw, 'circle-group', app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer()['.position-group'][0], false)
     posGroup = app.getActiveLayerGroup().getActiveDrawLayer().getDrawController().getCurrentPosGroup()
     posGroup.add(draw)
+    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().listening(true)
     //drawCommand.execute()
     //app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().find('.position-group')[0].add(draw)
 }
@@ -76,6 +78,8 @@ function createRoi(circleData) {
     //drawCommand = new dwv.tool.DrawGroupCommand(draw, 'circle-group', app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer()['.position-group'][0], false)
     posGroup = app.getActiveLayerGroup().getActiveDrawLayer().getDrawController().getCurrentPosGroup()
     posGroup.add(draw)
+    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().listening(true)
+
 }
 
 function createDraws(drawsData) {
@@ -215,7 +219,6 @@ app.addEventListener('loadend', function () {
 app.addEventListener('load', () => {
     app.setTool('Scroll')
 
-    // app.setTool('Draw')
     // createCircle({
     //     type: 'Circle',
     //     center: {
