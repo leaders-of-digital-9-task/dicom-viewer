@@ -12,7 +12,8 @@ var tools = {
     options: ['Circle', 'Roi'],
     type: 'factory'
   },
-  ZoomAndPan: {}
+  ZoomAndPan: {},
+  WindowLevel: {}
 };
 
 app.init({
@@ -32,12 +33,13 @@ function createCircle(circleData) {
     var point2 = new dwv.math.Point2D(circleData.center.x, circleData.center.y+circleData.radius)
     app.setTool('Draw');
     var styles = app.getToolboxController().getSelectedTool().style
+    app.undo()
     var draw = circleFactory.create(
         [point1, point2], 
         styles,
         app.getActiveLayerGroup().getActiveViewLayer().getViewController()
     )
-    app.undo()
+    
     draw.id(dwv.math.guid());
     draw.draggable(true)
     draw.addEventListener('mouseover', () => {
@@ -175,6 +177,9 @@ function receiveMessage(event)
         }
         else if (data.data == 'ZoomAndPan') {
             app.setTool('ZoomAndPan');
+        }
+        else if (data.data == 'WindowLevel') {
+            app.setTool('WindowLevel')
         }
       }
       else if (data.type == 'setDraws') {
