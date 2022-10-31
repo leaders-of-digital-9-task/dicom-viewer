@@ -102,10 +102,8 @@ function createDraws(drawsData) {
 function postCircles() {
     circlesAttrs = app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().getChildren().filter(e => e.attrs.name == 'circle-group').map(
         (e) => {
-            console.log(e, "eeeeee")
             return e.children.filter(
                 (ee) => {
-                    console.log(e)
                     return ee.attrs.name == 'shape'
                 }
             ).map(e => e.attrs)
@@ -131,10 +129,8 @@ function postCircles() {
 function postRois() {
     roisAttrs = app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().getChildren().filter(e => e.attrs.name == 'roi-group').map(
         (e) => {
-            console.log(e, "eeeeee")
             return e.children.filter(
                 (ee) => {
-                    console.log(e)
                     return ee.attrs.name == 'shape'
                 }
             ).map(e => e.attrs)
@@ -195,6 +191,8 @@ function receiveMessage(event)
       }
       else if (data.type == 'deleteSelected') {
         app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find('#'+findActive())[0].destroy()
+        parent.postMessage({'type': 'returnDrawsDelete', data: postDraws()}, "*")
+
       }
       else if (data.type == 'setContrast') {
         document.getElementById("layerGroup0").style = `filter: contrast(${data.data}%);`
@@ -221,7 +219,6 @@ function findActive() {
         return e.children.filter((e) => e.attrs.name == 'anchor')
     }))
     active = new Set(activeCandidates.flat().map(e => e.parent.id()))
-    console.log(activeCandidates, active)
     return [...active][0]
 }
 
@@ -233,9 +230,9 @@ app.addEventListener('loadend', function () {
 //app.loadURLs(['https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm'])
 
 app.addEventListener('load', () => {
-    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().addEventListener('mouseup', () => {
-        parent.postMessage({'type': 'returnDraws', data: postDraws()}, "*")
-    })
+    // app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().addEventListener('mouseup', () => {
+    //     parent.postMessage({'type': 'returnDraws', data: postDraws()}, "*")
+    // })
     // createCircle({
     //     type: 'Circle',
     //     center: {
