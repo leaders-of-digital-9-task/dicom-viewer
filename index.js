@@ -302,7 +302,7 @@ function receiveMessage(event)
       } else if(data.type == "setTool"){
         if (data.data == "null"){
           app.setTool('Scroll');
-        } else if (data.data == 'Roi' || data.data == 'Circle' || data.data == 'FreeHand'){
+        } else if (data.data == 'Roi' || data.data == 'Circle' || data.data == 'FreeHand' || data.data == 'Ruler'){
           app.setTool('Draw');
           app.setDrawShape(data.data);
         }
