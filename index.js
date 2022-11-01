@@ -6,13 +6,14 @@ var circleFactory = new dwv.tool.draw.CircleFactory();
 var roiFactory = new dwv.tool.draw.RoiFactory();
 var freeHandFactory = new dwv.tool.draw.FreeHandFactory();
 var rulerFactory = new dwv.tool.draw.RulerFactory();
+var rectFactory = new dwv.tool.draw.RectangleFactory();
 schema = []
 
 
 var tools = {
   Scroll: {},
   Draw: {
-    options: ['Circle', 'Roi', 'FreeHand', 'Ruler'],
+    options: ['Circle', 'Roi', 'FreeHand', 'Ruler', 'Rectangle'],
     type: 'factory',
     events: ['drawcreate', 'drawchange', 'drawmove', 'drawdelete']
   },
@@ -35,14 +36,13 @@ app.init({
 parent.postMessage({'type': 'getDicom', data: ""}, "*")
 
 app.addEventListener('load', function () {
-  app.setTool('Draw');
-  app.setDrawShape('Ruler')
 
   setTimeout(() => {
     console.log(postRuler())
   }, 3000)
 
   app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().addEventListener('mouseup', () => {
+    console.log(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer())
     setTimeout(() => {
         parent.postMessage({'type': 'returnDraws', data: postDraws()}, "*")
         //console.log({'type': 'returnDraws', data: postDraws()})
@@ -59,6 +59,7 @@ function loadSchema(schema) {
         picSchema.set(schema[i].url, schema[i].figures)
         urls.push(schema[i].url)
     }
+    app.loadURLs(urls)
     return [urls, picSchema]
 }
 
@@ -175,6 +176,30 @@ function createRoi(circleData) {
 
 }
 
+function createRectangle(rectangleData) {
+    app.setTool('Draw');
+    var styles = app.getToolboxController().getSelectedTool().style
+    points = rectangleData.points.map((e) => {
+        return new dwv.math.Point2D(e.x, e.y)
+    })
+
+    var draw = rectFactory.create(
+        points, 
+        styles, 
+        app.getActiveLayerGroup().getActiveViewLayer().getViewController()
+    )
+    draw.id(dwv.math.guid());
+    draw.draggable(true)
+    draw.addEventListener('mouseover', () => {
+        document.body.style.cursor = 'pointer'
+    })
+    draw.addEventListener('mouseout', () => {
+        document.body.style.cursor = 'default'
+    })
+    posGroup = app.getActiveLayerGroup().getActiveDrawLayer().getDrawController().getCurrentPosGroup()
+    posGroup.add(draw)
+    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().listening(true)
+}
 
 
 function createDraws(drawsData) {
@@ -190,6 +215,9 @@ function createDraws(drawsData) {
         }
         if (e.type == 'Ruler') {
             createRuler(e.data)
+        }
+        if (e.type == 'Rectangle') {
+            createRectangle(e.data)
         }
     })
 }
@@ -247,8 +275,31 @@ function postRois() {
 }
 
 function postDraws() {
-    console.log(postRois())
-    return JSON.parse(JSON.stringify(postCircles().concat(postRois()).concat(postFreeHand())))
+    return JSON.parse(JSON.stringify(
+        postCircles().concat(postRois()).concat(postFreeHand()).concat(postRuler()).concat(postRects())
+    ))
+}
+
+function postRects() {
+    roisAttrs = []
+    // setTimeout(() => {
+    //     console.log(roisAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().find('.rectangle-group')), 'rect')
+    // }, 1000)
+    roisAttrs = roisAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().find('.rectangle-group').map((e) => {
+        return e.children.filter((e) => e.attrs.name == 'shape').map(e => {return {attrs: e.attrs, parent: e.parent.attrs}})
+    }))
+    return roisAttrs.flat().map((e) => {
+        e.attrs.points = [e.attrs.x, e.attrs.y, e.attrs.x+e.attrs.width, e.attrs.y+e.attrs.height]
+        var points = [];
+        for (var i = 0; i < e.attrs.points.length; i+=2) {
+            points.push({x: e.attrs.points[i], y: e.attrs.points[i+1]})
+        }
+        return {
+            type: 'Rectangle',
+            points: points,
+            id: e.parent.id
+        }
+    })
 }
 
 function postFreeHand() {
@@ -302,7 +353,7 @@ function receiveMessage(event)
       } else if(data.type == "setTool"){
         if (data.data == "null"){
           app.setTool('Scroll');
-        } else if (data.data == 'Roi' || data.data == 'Circle' || data.data == 'FreeHand' || data.data == 'Ruler'){
+        } else if (data.data == 'Roi' || data.data == 'Circle' || data.data == 'FreeHand' || data.data == 'Ruler' || data.data == 'Rectangle'){
           app.setTool('Draw');
           app.setDrawShape(data.data);
         }
@@ -406,18 +457,14 @@ function setFrame(frameNumber) {
     loadPictures(
         schema[1].get(schema[0][frameNumber])
     )
+    app.setTool('Draw')
 }
 
 function loadPictures(pictures) {
     // app.deleteDraws()
     deleteDraws()
     pictures.map((e) => {
-        if (e.type == 'Circle') {
-            createCircle(e)
-        }
-        else if (e.type == 'Roi') {
-            createRoi(e)
-        }
+        createDraws(e)
     })
 }
 
@@ -425,6 +472,8 @@ function deleteDraws() {
     app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find('.circle-group').map((e) => e.destroy())
     app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find('.roi-group').map((e) => e.destroy())
     app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find('.freeHand-group').map((e) => e.destroy())
+    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find('.rectangle-group').map((e) => e.destroy())
+    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find('.ruler-group').map((e) => e.destroy())
 }
 
 app.addEventListener('slicechange', function () {
