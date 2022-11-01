@@ -4,18 +4,28 @@ var app = new dwv.App();
 
 var circleFactory = new dwv.tool.draw.CircleFactory();
 var roiFactory = new dwv.tool.draw.RoiFactory();
+var freeHandFactory = new dwv.tool.draw.FreeHandFactory();
+var rulerFactory = new dwv.tool.draw.RulerFactory();
 schema = []
 
 
 var tools = {
   Scroll: {},
   Draw: {
-    options: ['Circle', 'Roi', 'Ruler', 'FreeHand'],
-    type: 'factory'
+
+    options: ['Circle', 'Roi', 'FreeHand', 'Ruler'],
+    type: 'factory',
+    events: ['drawcreate', 'drawchange', 'drawmove', 'drawdelete']
   },
   ZoomAndPan: {},
   WindowLevel: {},
-  Filter: {}
+  Filter: {},
+  Livewire: {
+    events: ['drawcreate', 'drawchange', 'drawmove', 'drawdelete']
+  },
+  Floodfill: {
+    events: ['drawcreate', 'drawchange', 'drawmove', 'drawdelete']
+  }
 };
 
 app.init({
@@ -27,7 +37,18 @@ parent.postMessage({'type': 'getDicom', data: ""}, "*")
 
 app.addEventListener('load', function () {
   app.setTool('Draw');
-  app.setDrawShape('Circle')
+  app.setDrawShape('Ruler')
+
+  setTimeout(() => {
+    console.log(postRuler())
+  }, 3000)
+
+  app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().addEventListener('mouseup', () => {
+    setTimeout(() => {
+        parent.postMessage({'type': 'returnDraws', data: postDraws()}, "*")
+        //console.log({'type': 'returnDraws', data: postDraws()})
+    }, 100)
+})
 });
 
 function loadSchema(schema) {
@@ -74,6 +95,60 @@ function createCircle(circleData) {
 }
 
 
+function createRuler(rulerData) {
+    app.setTool('Draw');
+    var styles = app.getToolboxController().getSelectedTool().style
+    points = rulerData.points.map((e) => {
+        return new dwv.math.Point2D(e.x, e.y)
+    })
+
+    var draw = rulerFactory.create(
+        points, 
+        styles, 
+        app.getActiveLayerGroup().getActiveViewLayer().getViewController()
+    )
+    draw.id(dwv.math.guid());
+    draw.draggable(true)
+    draw.addEventListener('mouseover', () => {
+        document.body.style.cursor = 'pointer'
+    })
+    draw.addEventListener('mouseout', () => {
+        document.body.style.cursor = 'default'
+    })
+    //drawCommand = new dwv.tool.DrawGroupCommand(draw, 'circle-group', app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer()['.position-group'][0], false)
+    posGroup = app.getActiveLayerGroup().getActiveDrawLayer().getDrawController().getCurrentPosGroup()
+    posGroup.add(draw)
+    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().listening(true)
+}
+
+
+function createFreeHand(freeHandData) {
+    app.setTool('Draw');
+    var styles = app.getToolboxController().getSelectedTool().style
+    points = freeHandData.points.map((e) => {
+        return new dwv.math.Point2D(e.x, e.y)
+    })
+
+    var draw = freeHandFactory.create(
+        points, 
+        styles, 
+        app.getActiveLayerGroup().getActiveViewLayer().getViewController()
+    )
+    draw.id(dwv.math.guid());
+    draw.draggable(true)
+    draw.addEventListener('mouseover', () => {
+        document.body.style.cursor = 'pointer'
+    })
+    draw.addEventListener('mouseout', () => {
+        document.body.style.cursor = 'default'
+    })
+    //drawCommand = new dwv.tool.DrawGroupCommand(draw, 'circle-group', app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer()['.position-group'][0], false)
+    posGroup = app.getActiveLayerGroup().getActiveDrawLayer().getDrawController().getCurrentPosGroup()
+    posGroup.add(draw)
+    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().listening(true)
+}
+
+
 function createRoi(circleData) {
     app.setTool('Draw');
     var styles = app.getToolboxController().getSelectedTool().style
@@ -101,6 +176,8 @@ function createRoi(circleData) {
 
 }
 
+
+
 function createDraws(drawsData) {
     drawsData.data.map((e) => {
         if (e.type == 'Circle') {
@@ -108,6 +185,12 @@ function createDraws(drawsData) {
         }
         if (e.type == 'Roi') {
             createRoi(e)
+        }
+        if (e.type == 'FreeHand') {
+            createFreeHand(e)
+        }
+        if (e.type == 'Ruler') {
+            createRuler(e.data)
         }
     })
 }
@@ -167,7 +250,43 @@ function postRois() {
 
 function postDraws() {
     console.log(postRois())
-    return JSON.parse(JSON.stringify(postCircles().concat(postRois())))
+    return JSON.parse(JSON.stringify(postCircles().concat(postRois()).concat(postFreeHand())))
+}
+
+function postFreeHand() {
+    roisAttrs = []
+    roisAttrs = roisAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children[0].children.filter(e => e.attrs.name == 'freeHand-group').map((e) => {
+        return e.children.filter((e) => e.attrs.name == 'shape').map(e => {return {attrs: e.attrs, parent: e.parent.attrs}})
+    }))
+    return roisAttrs.flat().map((e) => {
+        var points = [];
+        for (var i = 0; i < e.attrs.points.length; i+=2) {
+            points.push({x: e.attrs.points[i], y: e.attrs.points[i+1]})
+        }
+        return {
+            type: 'FreeHand',
+            points: points,
+            id: e.parent.id
+        }
+    })
+}
+
+function postRuler() {
+    roisAttrs = []
+    roisAttrs = roisAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children[0].children.filter(e => e.attrs.name == 'ruler-group').map((e) => {
+        return e.children.filter((e) => e.attrs.name == 'shape').map(e => {return {attrs: e.attrs, parent: e.parent.attrs}})
+    }))
+    return roisAttrs.flat().map((e) => {
+        var points = [];
+        for (var i = 0; i < e.attrs.points.length; i+=2) {
+            points.push({x: e.attrs.points[i], y: e.attrs.points[i+1]})
+        }
+        return {
+            type: 'Ruler',
+            points: points,
+            id: e.parent.id
+        }
+    })
 }
 
 
@@ -185,7 +304,10 @@ function receiveMessage(event)
       } else if(data.type == "setTool"){
         if (data.data == "null"){
           app.setTool('Scroll');
-        } 
+        } else if (data.data == 'Roi' || data.data == 'Circle' || data.data == 'FreeHand' || data.data == 'Ruler'){
+          app.setTool('Draw');
+          app.setDrawShape(data.data);
+        }
         else if (data.data == 'ZoomAndPan') {
             app.setTool('ZoomAndPan');
         }
@@ -216,6 +338,9 @@ function receiveMessage(event)
       else if (data.type == 'loadSchema') {
         schema = loadSchema(data.data)
       }
+      else if (data.type == 'setIndex') {
+        setFrame(data.data)
+      }
 }
 window.addEventListener("message", receiveMessage, false);
 
@@ -242,23 +367,27 @@ app.addEventListener('loadend', function () {
   //range.max = app.getImage(0).getGeometry().getSize().get(2) - 1;
 });
 
+app.addEventListener('drawchange', (e) => {
+    console.log(e)
+})
 
-// schema = [
-//     {
-//         'url': 'https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm',
-//         'figures': [
-//             {type: 'Circle', center: {x: 10, y: 100}, radius: 10},
-//             {type: 'Roi', points: [{x: 10, y: 20}, {x: 100, y: 50}]}
-//         ]
-//     },
-//     {
-//         'url': 'https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323707.dcm',
-//         'figures': [
-//             {type: 'Circle', center: {x: 10, y: 200}, radius: 10},
-//             {type: 'Roi', points: [{x: 10, y: 30}, {x: 100, y: 50}]}
-//         ]
-//     }
-// ]
+
+schema = [
+    {
+        'url': 'https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323851.dcm',
+        'figures': [
+            {type: 'Circle', center: {x: 10, y: 100}, radius: 10},
+            {type: 'Roi', points: [{x: 10, y: 20}, {x: 100, y: 50}]}
+        ]
+    },
+    {
+        'url': 'https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323707.dcm',
+        'figures': [
+            {type: 'Circle', center: {x: 10, y: 200}, radius: 10},
+            {type: 'Roi', points: [{x: 10, y: 30}, {x: 100, y: 50}]}
+        ]
+    }
+]
 
 // schema = loadSchema(schema)
 
@@ -289,7 +418,6 @@ function setFrame(frameNumber) {
 function loadPictures(pictures) {
     // app.deleteDraws()
     deleteDraws()
-    app.setTool('Draw')
     pictures.map((e) => {
         if (e.type == 'Circle') {
             createCircle(e)
@@ -303,57 +431,8 @@ function loadPictures(pictures) {
 function deleteDraws() {
     app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find('.circle-group').map((e) => e.destroy())
     app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find('.roi-group').map((e) => e.destroy())
+    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find('.freeHand-group').map((e) => e.destroy())
 }
-
-app.addEventListener('load', () => {
-
-    // app.setDrawShape('Roi')
-    app.setTool("Scroll")
-    setFrame(0)
-    // loadPictures([
-    //     {type: 'Circle', center: {x: 10, y: 100}, radius: 10},
-    //     {type: 'Roi', points: [{x: 10, y: 20}, {x: 100, y: 50}]}
-    // ])
-    setTimeout(() => {
-        setFrame(1)
-    }, 1000)
-    var lg = app.getLayerGroupById(0);
-    var vc = lg.getActiveViewLayer().getViewController();
-    console.log(vc.getCurrentScrollIndexValue())
-    //app.getActiveLayerGroup().getActiveViewLayer().getViewController().setCurrentIndex(new dwv.math.Index(1))
-    app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().addEventListener('mouseup', () => {
-        setTimeout(() => {
-            parent.postMessage({'type': 'returnDraws', data: postDraws()}, "*")
-            //console.log({'type': 'returnDraws', data: postDraws()})
-        }, 100)
-    })
-    // createCircle({
-    //     type: 'Circle',
-    //     center: {
-    //         x: 10, y: 100
-    //     },
-    //     radius: 100
-    // })
-    // setTimeout(() => {
-    //     console.log(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children)
-    // }, 3000)
-    // createRoi({
-    //     type: 'Roi',
-    //     points: [
-    //         {
-    //             x: 100, y: 100
-    //         },
-    //         {
-    //             x: 10, y: 100
-    //         }
-    //     ]
-    // })
-    // app.setDrawShape('Roi')
-    // setTimeout(() => {
-    // }, 3000)
-    // setTimeout(() => {
-    // }, 5000)
-})
 
 app.addEventListener('slicechange', function () {
   // update slider on slice change (for ex via mouse wheel)
