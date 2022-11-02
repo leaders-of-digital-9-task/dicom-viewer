@@ -62,6 +62,9 @@ function loadSchema(schema) {
         urls.push(schema[i].url)
     }
     app.loadURLs(urls)
+    try{
+        createDraws(schema[0].figures)
+    } catch {}
     return [urls, picSchema]
 }
 
