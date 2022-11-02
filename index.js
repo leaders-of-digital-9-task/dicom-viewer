@@ -32,15 +32,17 @@ app.init({
   dataViewConfigs: {'*': [{divId: 'layerGroup0'}]},
   tools: tools
 });
-
 parent.postMessage({'type': 'getDicom', data: ""}, "*")
 
 app.addEventListener('load', function () {
 
-  setTimeout(() => {
-    console.log(postRuler())
-  }, 3000)
-
+//   setTimeout(() => {
+//     console.log(postRuler())
+//   }, 3000)
+  app.setTool('Draw')
+  app.setDrawShape('Circle')
+  currentframeNumber = 1
+  setFrame(1)
   app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().addEventListener('mouseup', () => {
     console.log(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer())
     setTimeout(() => {
@@ -439,12 +441,9 @@ schema = [
     }
 ]
 
-// schema = loadSchema(schema)
-
 // console.log(schema[0], "0")
 
-
-// app.loadURLs(schema[0])
+//app.loadURLs(schema[0])
 
 
 // app.loadURLs([
@@ -452,26 +451,29 @@ schema = [
 //     'https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323707.dcm',
 //     'https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323563.dcm'
 // ])
-
+currentframeNumber = 0
 function setFrame(frameNumber) {
     var lg = app.getLayerGroupById(0);
     var vc = lg.getActiveViewLayer().getViewController();
     var index = vc.getCurrentIndex();
     var values = index.getValues();
+    pics = schema[1].get(schema[0][frameNumber])
+    schema[1].set(schema[0][currentframeNumber], postDraws())
+    console.log(schema)
     values[2] = frameNumber;
     vc.setCurrentIndex(new dwv.math.Index(values));
     loadPictures(
-        schema[1].get(schema[0][frameNumber])
+        pics
     )
     app.setTool('Draw')
+    currentframeNumber = frameNumber
 }
 
 function loadPictures(pictures) {
+    console.log(pictures)
     // app.deleteDraws()
     deleteDraws()
-    pictures.map((e) => {
-        createDraws(e)
-    })
+    createDraws({data: pictures})
 }
 
 function deleteDraws() {
