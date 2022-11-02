@@ -377,7 +377,7 @@ function receiveMessage(event)
         createDraws(data)
       }
       else if (data.type == 'getDraws') {
-        parent.postMessage({'type': 'returnDraws', data: postDraws()}, "*")
+        parent.postMessage({'type': 'saveDraws', data: postDraws()}, "*")
       }
       else if (data.type == 'deleteSelected') {
         app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().find('#'+findActive())[0].destroy()
