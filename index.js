@@ -241,7 +241,7 @@ function postCircles() {
     //     }
     // )
     circlesAttrs = []
-    circlesAttrs = circlesAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children[0].children.filter(e => e.attrs.name == 'circle-group').map((e) => {
+    circlesAttrs = circlesAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().find('.circle-group').map((e) => {
         return e.children.filter((eee) => eee.attrs.name == 'shape').map(ee => {return {attrs: ee.attrs, parent: e.attrs}})
     }))
     //circleAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children[0])
@@ -260,7 +260,7 @@ function postCircles() {
 
 function postRois() {
     roisAttrs = []
-    roisAttrs = roisAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children[0].children.filter(e => e.attrs.name == 'roi-group').map((e) => {
+    roisAttrs = roisAttrsconcat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().find('.roi-group').map((e) => {
         return e.children.filter((e) => e.attrs.name == 'shape').map(e => {return {attrs: e.attrs, parent: e.parent.attrs}})
     }))
     return roisAttrs.flat().map((e) => {
@@ -307,7 +307,7 @@ function postRects() {
 
 function postFreeHand() {
     roisAttrs = []
-    roisAttrs = roisAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children[0].children.filter(e => e.attrs.name == 'freeHand-group').map((e) => {
+    roisAttrs = roisAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().find('.freeHand-group').map((e) => {
         return e.children.filter((e) => e.attrs.name == 'shape').map(e => {return {attrs: e.attrs, parent: e.parent.attrs}})
     }))
     return roisAttrs.flat().map((e) => {
@@ -325,7 +325,7 @@ function postFreeHand() {
 
 function postRuler() {
     roisAttrs = []
-    roisAttrs = roisAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().children[0].children.filter(e => e.attrs.name == 'ruler-group').map((e) => {
+    roisAttrs = roisAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().find('.ruler-group').map((e) => {
         return e.children.filter((e) => e.attrs.name == 'shape').map(e => {return {attrs: e.attrs, parent: e.parent.attrs}})
     }))
     return roisAttrs.flat().map((e) => {
