@@ -263,7 +263,7 @@ function postCircles() {
 
 function postRois() {
     roisAttrs = []
-    roisAttrs = roisAttrsconcat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().find('.roi-group').map((e) => {
+    roisAttrs = roisAttrs.concat(app.getActiveLayerGroup().getActiveDrawLayer().getKonvaLayer().find('.roi-group').map((e) => {
         return e.children.filter((e) => e.attrs.name == 'shape').map(e => {return {attrs: e.attrs, parent: e.parent.attrs}})
     }))
     return roisAttrs.flat().map((e) => {
