@@ -39,6 +39,8 @@ app.addEventListener('load', function () {
 //   setTimeout(() => {
 //     console.log(postRuler())
 //   }, 3000)
+  currentframeNumber = 0
+  setFrame(0)
   app.setTool('Draw')
   app.setDrawShape('Circle')
   app.getActiveLayerGroup().getActiveDrawLayer().getKonvaStage().addEventListener('mouseup', () => {
@@ -387,8 +389,6 @@ function receiveMessage(event)
       }
       else if (data.type == 'loadSchema') {
         schema = loadSchema(data.data)
-        currentframeNumber = 0
-        setFrame(0)
       }
       else if (data.type == 'setIndex') {
         setFrame(data.data)
